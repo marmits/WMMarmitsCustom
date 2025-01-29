@@ -29,7 +29,7 @@ custom voir `$wgLastModifiedRange` dans doc
   MediaWiki
   Catégorie:Private
   ```
-+ Custom le footer 
++ Custom le footer (par encore implémenté)
   - Ajoute la date de la 1ère création
   - Ajoute la date de la dernère modification
 + Supprime le lien discussion de la page 
