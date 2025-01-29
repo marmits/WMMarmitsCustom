@@ -8,7 +8,7 @@ https://www.mediawiki.org/wiki/Extension:LastModified
 `wfLoadExtension( 'WMMarmitsCustom' );`
 
 ### Paramètre  
-Pour désactiver le hook de LastModified :   
+Pour désactiver le hook d'origine de 'LastModified' :   
 Dans `LocalSettings.php` ajouter :  
 `$wgMarmitsCustomRange = -1;`
 
@@ -17,7 +17,7 @@ custom voir `$wgLastModifiedRange` dans doc
 `$wgMarmitsCustomRange` = `$wgLastModifiedRange`  
 https://www.mediawiki.org/wiki/Extension:LastModified
 
-
+### Description  
 + Génère des horodatages de dernière modification pour les pages (Hook d'origine)
 + Protège l'accès à certaines pages 
   ```
