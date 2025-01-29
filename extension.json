@@ -4,7 +4,7 @@
 	"author": [
 		"Geoffroy Stolaric"
 	],
-	"url": "https://marmits.com/github",
+	"url": "https://github.com/marmits/WMMarmitsCustom",
 	"descriptionmsg": "marmitscustom-desc",
 	"type": "other",
 	"requires": {
@@ -50,7 +50,7 @@
 	"config": {
 		"MarmitsCustomRange": {
 			"description": "This variable controls the display range.\nSee documentation on https://www.mediawiki.org/wiki/Extension:LastModified for more details.",
-			"value": -1
+			"value": 0
 		}
 	},
 	"manifest_version": 2
