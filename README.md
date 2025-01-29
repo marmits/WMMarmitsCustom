@@ -1,6 +1,10 @@
 ## Extension pour MediaWiki
 Fork de l'extension :  
-https://www.mediawiki.org/wiki/Extension:LastModified
+[Extension:LastModified](https://www.mediawiki.org/wiki/Extension:LastModified)
+
+### Requirement
+Testé sur [MediaWiki 1.43 (LTS)](https://www.mediawiki.org/wiki/MediaWiki_1.43)
+
 ### Installation
 * Dans répertoire `extensions` :  
 `git clone https://github.com/marmits/WMMarmitsCustom.git`
@@ -15,7 +19,7 @@ Dans `LocalSettings.php` ajouter :
 Si le hook LastModified est activé :  
 custom voir `$wgLastModifiedRange` dans doc  
 `$wgMarmitsCustomRange` = `$wgLastModifiedRange`  
-https://www.mediawiki.org/wiki/Extension:LastModified
+[Extension:LastModified](https://www.mediawiki.org/wiki/Extension:LastModified)
 
 ### Description  
 + Génère des horodatages de dernière modification pour les pages (Hook d'origine)
