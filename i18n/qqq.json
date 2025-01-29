@@ -1,0 +1,16 @@
+{
+	"@metadata": {
+		"authors": [
+			"Geo"
+		]
+	},
+	"marmitscustom-desc": "{{desc|name=Last Modified|url=https://www.mediawiki.org/wiki/Extension:LastModified}}",
+	"marmitscustom": "{{doc-special|MarmitsCustom}}\n{{Identical|Marmits Custom}}",
+	"marmitscustom-title-tag": "Title tag for the link to the revision history.",
+	"marmitscustom-seconds": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of seconds\n{{Related|Marmitscustom}}",
+	"marmitscustom-minutes": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of minutes\n{{Related|Marmitscustom}}",
+	"marmitscustom-hours": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of hours\n{{Related|Marmitscustom}}",
+	"marmitscustom-days": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of days\n{{Related|Marmitscustom}}",
+	"marmitscustom-months": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of months\n{{Related|Marmitscustom}}",
+	"marmitscustom-years": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of years\n{{Related|Marmitscustom}}"
+}

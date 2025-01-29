@@ -1,0 +1,57 @@
+{
+	"name": "MarmitsCustom",
+	"version": "1.0.0",
+	"author": [
+		"Geoffroy Stolaric"
+	],
+	"url": "https://marmits.com/github",
+	"descriptionmsg": "marmitscustom-desc",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.42.0"
+	},
+	"MessagesDirs": {
+		"MarmitsCustom": [
+			"i18n"
+		]
+	},
+	"AutoloadClasses": {
+		"MarmitsCustomHooks": "MarmitsCustomHooks.php"
+	},
+	"ResourceModules": {
+		"marmits.custom": {
+			"scripts": "marmitscustom.js",
+			"dependencies": [
+				"mediawiki.jqueryMsg"
+			],
+			"messages": [
+				"marmitscustom-seconds",
+				"marmitscustom-hours",
+				"marmitscustom-minutes",
+				"marmitscustom-hours",
+				"marmitscustom-days",
+				"marmitscustom-months",
+				"marmitscustom-years",
+				"marmitscustom-title-tag"
+			]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "modules",
+		"remoteExtPath": "MarmitsCustom/modules"
+	},
+	"Hooks": {
+		"BeforePageDisplay": "MarmitsCustomHooks::onLastModified",
+		"OutputPageParserOutput": "MarmitsCustomHooks::Confidentiel",
+		"SkinAddFooterLinks": "MarmitsCustomHooks::onSkinAddFooterLinks",
+		"SkinTemplateNavigation::Universal": "MarmitsCustomHooks::onPagelinks",
+		"InfoAction": "MarmitsCustomHooks::onInfoPage"
+	},
+	"config": {
+		"MarmitsCustomRange": {
+			"description": "This variable controls the display range.\nSee documentation on https://www.mediawiki.org/wiki/Extension:LastModified for more details.",
+			"value": -1
+		}
+	},
+	"manifest_version": 2
+}

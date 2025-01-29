@@ -1,0 +1,16 @@
+{
+	"@metadata": {
+		"authors": [
+			"Geo"
+		]
+	},
+	"marmitscustom-desc": "Fork de LastModified + Protège l'accès à certaines pages + Custom le footer + Supprime le lien discussion de la page + Supprime le lien voir source de la page + Protège l'accès à l'information de la page",
+	"marmitscustom": "Dernière modification",
+	"marmitscustom-title-tag": "Afficher l’historique des versions pour cet article.",
+	"marmitscustom-seconds": "Dernière mise à jour il y a $1 seconde{{PLURAL:$1||s}}",
+	"marmitscustom-minutes": "Dernière mise à jour il y a $1 minute{{PLURAL:$1||s}}",
+	"marmitscustom-hours": "Dernière mise à jour il y a $1 heure{{PLURAL:$1||s}}",
+	"marmitscustom-days": "Dernière mise à jour il y a $1 jour{{PLURAL:$1||s}}",
+	"marmitscustom-months": "Dernière mise à jour il y a $1 mois{{PLURAL:$1|}}",
+	"marmitscustom-years": "Dernière modification il y a $1 an{{PLURAL:$1||s}}"
+}
