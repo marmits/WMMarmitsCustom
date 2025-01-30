@@ -111,6 +111,7 @@ class MarmitsCustomHooks {
 	*/
 	public static function onSkinAddFooterLinks( Skin $skin, string $key, array &$footerlinks ) { 
 
+		/*
 		$json = file_get_contents('https://marmits.com/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json');
 		$obj = json_decode($json, true);
 		$firstcreate = new DateTimeImmutable($obj['query']['logevents'][0]['timestamp']);
@@ -129,6 +130,8 @@ class MarmitsCustomHooks {
 				$date_firstcreate
 			); 
 		}
+		*/
+		return true;
 	}
 
 	/*
