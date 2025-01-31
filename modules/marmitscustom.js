@@ -24,7 +24,7 @@
  * This is the primary function for this script.
  */
 $( function () {
-	//LastModifiedExtension();
+	LastModifiedExtension();
 	setDateCreatedAndLasted();
 } );
 
@@ -145,17 +145,20 @@ function getMetaRange () {
 }
 
 function LastModifiedExtension(){
-	var historyLink = getArticleHistoryLink(),
+	var metaTag = $( "meta[name=last-modified-range]" );
+	if(getMetaRange() !== -1){
+		var historyLink = getArticleHistoryLink(),
 		html = '';
 
-	html += '<div id="mwe-lastmodified">';
-	html += '<a href="' + historyLink + '" title="' + mw.message( 'lastmodified-title-tag' ).escaped() + '">';
-	html += getLastModifiedText( getUtcTimeStamp() - getMetaLastModifiedTimestamp(), getMetaRange() );
-	html += '</a>';
-	html += '</div>';
+		html += '<div id="mwe-lastmodified">';
+		html += '<a href="' + historyLink + '" title="' + mw.message( 'lastmodified-title-tag' ).escaped() + '">';
+		html += getLastModifiedText( getUtcTimeStamp() - getMetaLastModifiedTimestamp(), getMetaRange() );
+		html += '</a>';
+		html += '</div>';
 
-	// Insert the HTML into the web page, based on skin
-	$( '.mw-indicators' ).append( html );
+		// Insert the HTML into the web page, based on skin
+		$( '.mw-indicators' ).append( html );
+	}
 }
 
 

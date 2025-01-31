@@ -63,7 +63,7 @@ class MarmitsCustomHooks {
         global $wgMarmitsCustomInfoDate;
 
 		// paramètre MarmitsCustomRange de l'extension à -1 => désactive le rendu
-		if($wgMarmitsCustomRange !== -1){
+		//if($wgMarmitsCustomRange !== -1){
 
 			$context = $out->getContext();
 			$title = $context->getTitle();
@@ -82,7 +82,7 @@ class MarmitsCustomHooks {
 				$out->addMeta( 'last-modified-range', $wgMarmitsCustomRange );
 
 			}
-		}
+		//}
 
         // Permet d'exploiter l'api pour récupérer des données et les ajouter dans les metas de la page
         // et pouvoir les exploiter via javascript
