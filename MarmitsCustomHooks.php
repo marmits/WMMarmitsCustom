@@ -9,7 +9,7 @@
  */
 class MarmitsCustomHooks {
 
-
+	
     /**
      * @return string
      */
@@ -24,7 +24,8 @@ class MarmitsCustomHooks {
     {
         return [
             '/w/api.php?action=query&list=logevents&lelimit=1&ledir=older&format=json',
-            '/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json'
+            '/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json',
+			'/w/api.php'
         ];
     }
     /**
@@ -36,6 +37,7 @@ class MarmitsCustomHooks {
     {
         $read_data = false;
         $url_request = $module->getRequest()->getRequestURL();
+	
         if(!in_array($url_request, self::getUrlAuthorized()) ) {
             if($module->getUser()->isRegistered()){
                 $read_data = true;
@@ -44,7 +46,7 @@ class MarmitsCustomHooks {
             $read_data = true;
         }
         if($read_data === false){
-            $module->dieWithException(new HttpError(401, 'Ressource interdite'));
+            $module->dieWithException(new HttpError(401, 'Sorry! Forbidden ressource => blocked by '.MarmitsCustomHooks::class.' Extension '));
         }
 		return true;
 	}
