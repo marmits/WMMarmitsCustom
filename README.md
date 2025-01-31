@@ -2,6 +2,28 @@
 Fork de l'extension :  
 [Extension:LastModified](https://www.mediawiki.org/wiki/Extension:LastModified)
 
+### Description
++ Génère des horodatages de dernière modification pour les pages (Hook d'origine)
++ Protège l'accès à certaines pages
+  ```
+  Spécial
+  MediaWiki
+  Catégorie:Private
+  ```
++ Bloque l'accès à l'api pour les anonymes à l'exception d'une liste d'urls définies (ressources authorisées)
++ Custom le footer via l'api et les ressources authorisées
+  - Ajoute la date de la 1ère création (création du wiki)
+  - Ajoute la date de la dernière modification dans le wiki
++ Supprime le lien discussion de la page
++ Supprime le lien voir source de la page
++ Protège l'accès à l'information de la page
+
+Ressources api authorisées et utlisées
+```
+/w/api.php?action=query&list=logevents&lelimit=1&ledir=older&format=json
+/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json
+ ```
+
 ### Requirement
 Testé sur [MediaWiki 1.43 (LTS)](https://www.mediawiki.org/wiki/MediaWiki_1.43)
 
@@ -21,19 +43,9 @@ custom voir `$wgLastModifiedRange` dans doc
 `$wgMarmitsCustomRange` = `$wgLastModifiedRange`  
 [Extension:LastModified](https://www.mediawiki.org/wiki/Extension:LastModified)
 
-### Description  
-+ Génère des horodatages de dernière modification pour les pages (Hook d'origine)
-+ Protège l'accès à certaines pages 
-  ```
-  Spécial
-  MediaWiki
-  Catégorie:Private
-  ```
-+ Bloque l'accès à l'api pour les anonymes à l'exception d'une liste d'urls définies (ressources authorisées)
-+ Custom le footer via l'api et les ressources authorisées
-  - Ajoute la date de la 1ère création (création du wiki)
-  - Ajoute la date de la dernière modification (dernière modification) 
-+ Supprime le lien discussion de la page 
-+ Supprime le lien voir source de la page 
-+ Protège l'accès à l'information de la page
+Pour désactiver l'affichage des dates de création et denière modification du wiki dans le footer.   
+Dans `LocalSettings.php` ajouter :  
+`$wgMarmitsCustomInfoDate = 0;`
+
+
 
