@@ -45,7 +45,8 @@
 		"OutputPageParserOutput": "MarmitsCustomHooks::Confidentiel",
 		"SkinAddFooterLinks": "MarmitsCustomHooks::onSkinAddFooterLinks",
 		"SkinTemplateNavigation::Universal": "MarmitsCustomHooks::onPagelinks",
-		"InfoAction": "MarmitsCustomHooks::onInfoPage"
+		"InfoAction": "MarmitsCustomHooks::onInfoPage",
+		"APIAfterExecute": "MarmitsCustomHooks::onAPIAfterExecute"
 	},
 	"config": {
 		"MarmitsCustomRange": {

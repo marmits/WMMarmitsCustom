@@ -3,7 +3,42 @@
 * fork =>
 * https://www.mediawiki.org/wiki/Extension:LastModified
 */
+
+/**
+ *
+ */
 class MarmitsCustomHooks {
+
+
+    /**
+     * @throws MWException
+     */
+    //Permet d'authoriser l'accès à l'api seulement pour un utlisateur enregistrer
+    //Permet d'authoriser l'accès à une liste de ressource définie pour les anonymes
+    public static function onAPIAfterExecute(ApiBase $module ): bool
+    {
+        $read_data = false;
+        $urls_authorized=[
+            '/w/api.php?action=query&list=logevents&lelimit=1&ledir=older&format=json',
+            '/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json'
+        ];
+
+        $url_request = $module->getRequest()->getRequestURL();
+        if(!in_array($url_request, $urls_authorized) ) {
+
+            if($module->getUser()->isRegistered()){
+                $read_data = true;
+            }
+        } else {
+            $read_data = true;
+        }
+        if($read_data === false){
+            $module->dieWithException(new HttpError(401, 'Ressource interdite'));
+        }
+
+		return true;
+	}
+
 	/**
 	 * Function provenant de l'extension LastModified	 
 	 * @param OutputPage &$out
@@ -53,9 +88,7 @@ class MarmitsCustomHooks {
 
 		$context = RequestContext::getMain();
 		$wgUser = $context->getUser();
-		//echo($test->isNamed());
-		//exit();
-
+		
 		if($wgUser->isSafeToLoad() === true){
 			
 			if ( $wgUser->isNamed() === false ) {
