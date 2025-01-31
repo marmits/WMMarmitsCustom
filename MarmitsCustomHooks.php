@@ -22,9 +22,9 @@ class MarmitsCustomHooks {
      */
     private static function getUrlAuthorized(): array
     {
-        return [
-            '/w/api.php?action=query&list=logevents&lelimit=1&ledir=older&format=json',
-            '/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json',
+        return [            
+			'/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json',	
+			'/w/api.php?action=query&list=recentchanges&formatversion=2&rclimit=1&format=json',					
 			'/w/api.php'
         ];
     }
@@ -90,12 +90,15 @@ class MarmitsCustomHooks {
             $out->addMeta( 'http:urlwiki', self::getUrlBase()  );
             $jsonOlder = file_get_contents(self::getUrlBase().self::getUrlAuthorized()[0]);
             $jsonNewer = file_get_contents(self::getUrlBase().self::getUrlAuthorized()[1]);
+			
             $objOlder = json_decode($jsonOlder, true);
-            $objNewer = json_decode($jsonNewer, true);
-            $lastcreate = new DateTimeImmutable($objOlder['query']['logevents'][0]['timestamp']);
-            $firstcreate = new DateTimeImmutable($objNewer['query']['logevents'][0]['timestamp']);
-            $date_lastcreate = $lastcreate->format('d/m/Y à H:m:s');
+            $objNewer = json_decode($jsonNewer, true);		
+			
+            $firstcreate = new DateTimeImmutable($objOlder['query']['logevents'][0]['timestamp']);
+            $lastcreate = new DateTimeImmutable($objNewer['query']['recentchanges'][0]['timestamp']);
+            $date_lastcreate = $lastcreate->format('d/m/Y à H:i:s');
             $date_firstcreate = $firstcreate->format('d/m/Y');
+
             $out->addMeta( 'http:date_created_wiki', $date_firstcreate  );
             $out->addMeta( 'http:date_lasted_wiki', $date_lastcreate  );
         }
