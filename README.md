@@ -47,5 +47,15 @@ Pour désactiver l'affichage des dates de création et denière modification du 
 Dans `LocalSettings.php` ajouter :  
 `$wgMarmitsCustomInfoDate = 0;`
 
+Modifier le CSS -> ajouter dans `MediaWiki:Common.css`  
+```
+#marmitswikicreatedweb{
+	color:#36c;
+}
+#marmitswikicreatedmobile{
+	display:inline-block;
+}
+
+```
 
 
