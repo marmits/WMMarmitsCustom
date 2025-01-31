@@ -24,17 +24,7 @@
  * This is the primary function for this script.
  */
 $( function () {
-	var historyLink = getArticleHistoryLink(),
-		html = '';
-
-	html += '<div id="mwe-lastmodified">';
-	html += '<a href="' + historyLink + '" title="' + mw.message( 'lastmodified-title-tag' ).escaped() + '">';
-	html += getLastModifiedText( getUtcTimeStamp() - getMetaLastModifiedTimestamp(), getMetaRange() );
-	html += '</a>';
-	html += '</div>';
-
-	// Insert the HTML into the web page, based on skin
-	$( '.mw-indicators' ).append( html );
+	//LastModifiedExtension();
 	setDateCreatedAndLasted();
 } );
 
@@ -152,6 +142,20 @@ function getMetaRange () {
 	}
 	
 	return 0;
+}
+
+function LastModifiedExtension(){
+	var historyLink = getArticleHistoryLink(),
+		html = '';
+
+	html += '<div id="mwe-lastmodified">';
+	html += '<a href="' + historyLink + '" title="' + mw.message( 'lastmodified-title-tag' ).escaped() + '">';
+	html += getLastModifiedText( getUtcTimeStamp() - getMetaLastModifiedTimestamp(), getMetaRange() );
+	html += '</a>';
+	html += '</div>';
+
+	// Insert the HTML into the web page, based on skin
+	$( '.mw-indicators' ).append( html );
 }
 
 
