@@ -2,6 +2,10 @@
 Fork de l'extension :  
 [Extension:LastModified](https://www.mediawiki.org/wiki/Extension:LastModified)
 
+### Informations
+Cette extension rend privées certaines ressources.  
+Plusieurs Hook sont exploités. (voir section Hooks dans `extension.json`)
+
 ### Description
 + Génère des horodatages de dernière modification pour les pages (Hook d'origine)
 + Protège l'accès à certaines pages
