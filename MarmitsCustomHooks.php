@@ -96,7 +96,7 @@ class MarmitsCustomHooks {
 			
             $firstcreate = new DateTimeImmutable($objOlder['query']['logevents'][0]['timestamp']);
             $lastcreate = new DateTimeImmutable($objNewer['query']['recentchanges'][0]['timestamp']);
-            $date_lastcreate = $lastcreate->format('d/m/Y à H:i:s');
+            $date_lastcreate = $lastcreate->add(new DateInterval('PT1H'))->format('d/m/Y à H:i');
             $date_firstcreate = $firstcreate->format('d/m/Y');
 
             $out->addMeta( 'http:date_created_wiki', $date_firstcreate  );
