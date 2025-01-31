@@ -12,5 +12,7 @@
 	"marmitscustom-hours": "Dernière mise à jour il y a $1 heure{{PLURAL:$1||s}}",
 	"marmitscustom-days": "Dernière mise à jour il y a $1 jour{{PLURAL:$1||s}}",
 	"marmitscustom-months": "Dernière mise à jour il y a $1 mois{{PLURAL:$1|}}",
-	"marmitscustom-years": "Dernière modification il y a $1 an{{PLURAL:$1||s}}"
+	"marmitscustom-years": "Dernière modification il y a $1 an{{PLURAL:$1||s}}",
+	"marmitscustom-wiki-creaded": "Wiki crée le : $1",
+	"marmitscustom-wiki-lastupdated": "Wiki modifié le : $1"
 }

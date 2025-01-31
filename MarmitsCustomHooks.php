@@ -11,21 +11,32 @@ class MarmitsCustomHooks {
 
 
     /**
-     * @throws MWException
+     * @return string
      */
-    //Permet d'authoriser l'accès à l'api seulement pour un utlisateur enregistrer
-    //Permet d'authoriser l'accès à une liste de ressource définie pour les anonymes
-    public static function onAPIAfterExecute(ApiBase $module ): bool
+    private static function getUrlBase(): string
     {
-        $read_data = false;
-        $urls_authorized=[
+        return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'];
+    }
+    /**
+     * @return string[]
+     */
+    private static function getUrlAuthorized(): array
+    {
+        return [
             '/w/api.php?action=query&list=logevents&lelimit=1&ledir=older&format=json',
             '/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json'
         ];
-
+    }
+    /**
+     * @throws MWException
+     */
+    //1- Permet d'authoriser l'accès à l'api seulement pour un utlisateur enregistré
+    //2- Permet d'authoriser l'accès à l'api pour les anonymes à une liste de ressources définies
+    public static function onAPIAfterExecute(ApiBase $module ): bool
+    {
+        $read_data = false;
         $url_request = $module->getRequest()->getRequestURL();
-        if(!in_array($url_request, $urls_authorized) ) {
-
+        if(!in_array($url_request, self::getUrlAuthorized()) ) {
             if($module->getUser()->isRegistered()){
                 $read_data = true;
             }
@@ -35,18 +46,19 @@ class MarmitsCustomHooks {
         if($read_data === false){
             $module->dieWithException(new HttpError(401, 'Ressource interdite'));
         }
-
 		return true;
 	}
 
-	/**
-	 * Function provenant de l'extension LastModified	 
-	 * @param OutputPage &$out
-	 * @param Skin &$sk
-	 * @return bool
-	 */
+    /**
+     * Function provenant de l'extension LastModified
+     * @param OutputPage &$out
+     * @param Skin &$sk
+     * @return bool
+     * @throws DateMalformedStringException
+     */
 	public static function onLastModified( &$out, &$sk ) {
 		global $wgMarmitsCustomRange;
+        global $wgMarmitsCustomInfoDate;
 
 		// paramètre MarmitsCustomRange de l'extension à -1 => désactive le rendu
 		if($wgMarmitsCustomRange !== -1){
@@ -66,10 +78,26 @@ class MarmitsCustomHooks {
 				$out->addMeta( 'http:last-modified', date( 'r', $timestamp ) );
 				$out->addMeta( 'last-modified-timestamp', $timestamp );
 				$out->addMeta( 'last-modified-range', $wgMarmitsCustomRange );
-				$out->addModules( 'marmits.custom' );
+
 			}
 		}
 
+        // Permet d'exploiter l'api pour récupérer des données et les ajouter dans les metas de la page
+        // et pouvoir les exploiter via javascript
+        if($wgMarmitsCustomInfoDate === 1) {
+            $out->addMeta( 'http:urlwiki', self::getUrlBase()  );
+            $jsonOlder = file_get_contents(self::getUrlBase().self::getUrlAuthorized()[0]);
+            $jsonNewer = file_get_contents(self::getUrlBase().self::getUrlAuthorized()[1]);
+            $objOlder = json_decode($jsonOlder, true);
+            $objNewer = json_decode($jsonNewer, true);
+            $lastcreate = new DateTimeImmutable($objOlder['query']['logevents'][0]['timestamp']);
+            $firstcreate = new DateTimeImmutable($objNewer['query']['logevents'][0]['timestamp']);
+            $date_lastcreate = $lastcreate->format('d/m/Y à H:m:s');
+            $date_firstcreate = $firstcreate->format('d/m/Y');
+            $out->addMeta( 'http:date_created_wiki', $date_firstcreate  );
+            $out->addMeta( 'http:date_lasted_wiki', $date_lastcreate  );
+        }
+        $out->addModules( 'marmits.custom' );
 		return true;
 	}
 
@@ -206,4 +234,6 @@ class MarmitsCustomHooks {
 		}
 		return true;
 	}
+
+
 }

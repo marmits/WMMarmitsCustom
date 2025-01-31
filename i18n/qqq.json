@@ -12,5 +12,7 @@
 	"marmitscustom-hours": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of hours\n{{Related|Marmitscustom}}",
 	"marmitscustom-days": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of days\n{{Related|Marmitscustom}}",
 	"marmitscustom-months": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of months\n{{Related|Marmitscustom}}",
-	"marmitscustom-years": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of years\n{{Related|Marmitscustom}}"
+	"marmitscustom-years": "Text displayed on page if page to show how long ago the page was updated. Parameters:\n* $1 - number of years\n{{Related|Marmitscustom}}",
+	"marmitscustom-wiki-creaded": "Text displayed => Shows when the wiki was created. Parameters:\n* $1 - date created on\n{{Related|Marmitscustom}}",
+	"marmitscustom-wiki-lastupdated": "Text displayed => Shows when the wiki was last modified. Parameters:\n* $1 - wiki last updated on\n{{Related|Marmitscustom}}"
 }

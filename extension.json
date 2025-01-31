@@ -32,7 +32,9 @@
 				"marmitscustom-days",
 				"marmitscustom-months",
 				"marmitscustom-years",
-				"marmitscustom-title-tag"
+				"marmitscustom-title-tag",
+				"marmitscustom-wiki-creaded",
+				"marmitscustom-wiki-lastupdated"
 			]
 		}
 	},
@@ -52,6 +54,10 @@
 		"MarmitsCustomRange": {
 			"description": "This variable controls the display range.\nSee documentation on https://www.mediawiki.org/wiki/Extension:LastModified for more details.",
 			"value": 0
+		},
+		"MarmitsCustomInfoDate": {
+			"description": "This variable controls the display the older date and the newer date of the logevents",
+			"value": 1
 		}
 	},
 	"manifest_version": 2

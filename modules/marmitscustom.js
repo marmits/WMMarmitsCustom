@@ -35,6 +35,7 @@ $( function () {
 
 	// Insert the HTML into the web page, based on skin
 	$( '.mw-indicators' ).append( html );
+	setDateCreatedAndLasted();
 } );
 
 /**
@@ -152,5 +153,42 @@ function getMetaRange () {
 	
 	return 0;
 }
+
+
+// permet d'afficher dans le footer la date de la dernère mise à jour sur le wiki et la date du premiere article sur le wiki
+// via l'api
+// date de la dernère mise à jour avant #footer-places
+// date de creation à la 1ere place de #footer-places
+function setDateCreatedAndLasted() {
+
+	//let urlwiki = $( "meta[name=urlwiki]" );
+	let meta_date_created_wiki = $( "meta[http-equiv=date_created_wiki]" );
+	let meta_date_lasted_wiki = $( "meta[http-equiv=date_lasted_wiki]" );
+	if(meta_date_created_wiki.length && meta_date_lasted_wiki.length) {
+		let mobile = $('#mw-mf-viewport');
+		let footerplaces =  $( '#footer-places' );
+		let footerplacesFirstChild = $( '#footer-places li:first-child' );
+		let date_created_wiki = meta_date_created_wiki.attr( 'content' ) ;
+		let date_lasted_wiki = meta_date_lasted_wiki.attr( 'content' ) ;
+		let created = mw.msg( 'marmitscustom-wiki-creaded', date_created_wiki);
+		let lasteupdated = mw.msg( 'marmitscustom-wiki-lastupdated', date_lasted_wiki);
+
+		if(footerplaces.length) {
+			let html = '';
+			html += '<ul>';
+			html += '<li>'+lasteupdated+'</li>';
+			html += '</ul>';
+			footerplaces.before(html);
+			html = '';
+			let versionSite = 'marmitswikicreatedweb';
+			if(mobile.length) {
+				versionSite = 'marmitswikicreatedmobile';
+			}
+			html += '<li id="'+versionSite+'">' + created + '</li>';
+			footerplacesFirstChild.before(html);
+		}
+	}
+}
+
 
 }( jQuery, mediaWiki ) ); 

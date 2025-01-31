@@ -29,10 +29,11 @@ custom voir `$wgLastModifiedRange` dans doc
   MediaWiki
   Catégorie:Private
   ```
-+ Custom le footer (par encore implémenté)
-  - Ajoute la date de la 1ère création
-  - Ajoute la date de la dernère modification
++ Bloque l'accès à l'api pour les anonymes à l'exception d'une liste d'urls définies (ressources authorisées)
++ Custom le footer via l'api et les ressources authorisées
+  - Ajoute la date de la 1ère création (création du wiki)
+  - Ajoute la date de la dernière modification (dernière modification) 
 + Supprime le lien discussion de la page 
 + Supprime le lien voir source de la page 
 + Protège l'accès à l'information de la page
-+ Bloque l'accès à l'api pour les anonymes à l'exception d'une liste d'urls déginies
+
