@@ -24,8 +24,8 @@ class MarmitsCustomHooks {
     private static function getUrlAuthorized(): array
     {
         return [            
-			'/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json',	
-			'/w/api.php?action=query&list=recentchanges&formatversion=2&rclimit=1&format=json',					
+			'/w/api.php?action=query&list=logevents&formatversion=2&lelimit=1&ledir=newer&format=json',	
+			'/w/api.php?action=query&list=recentchanges&formatversion=2&formatversion=2&rclimit=1&format=json',					
 			'/w/api.php'
         ];
     }
