@@ -171,6 +171,8 @@ function setDateCreatedAndLasted() {
 	//let urlwiki = $( "meta[name=urlwiki]" );
 	let meta_date_created_wiki = $( "meta[http-equiv=date_created_wiki]" );
 	let meta_date_lasted_wiki = $( "meta[http-equiv=date_lasted_wiki]" );
+	let meta_title_lasted_wiki = $( "meta[http-equiv=title_lasted_wiki]" );
+
 	if(meta_date_created_wiki.length && meta_date_lasted_wiki.length) {
 		let mobile = $('#mw-mf-viewport');
 		let footerplaces =  $( '#footer-places' );
@@ -183,7 +185,7 @@ function setDateCreatedAndLasted() {
 		if(footerplaces.length) {
 			let html = '';
 			html += '<ul>';
-			html += '<li>'+lasteupdated+'</li>';
+			html += '<li>'+lasteupdated+' (page: '+meta_title_lasted_wiki.attr( 'content' ) +')</li>';
 			html += '</ul>';
 			footerplaces.before(html);
 			html = '';

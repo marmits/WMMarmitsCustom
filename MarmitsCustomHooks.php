@@ -102,6 +102,7 @@ class MarmitsCustomHooks {
 
             $out->addMeta( 'http:date_created_wiki', $firstcreate->format('d/m/Y')  );
             $out->addMeta( 'http:date_lasted_wiki', $lastcreate->format('d/m/Y à H:i'));
+            $out->addMeta( 'http:title_lasted_wiki', $objNewer['query']['recentchanges'][0]['title']);
         }
         $out->addModules( 'marmits.custom' );
 		return true;
