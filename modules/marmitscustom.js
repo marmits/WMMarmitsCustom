@@ -185,7 +185,7 @@ function setDateCreatedAndLasted() {
 		if(footerplaces.length) {
 			let html = '';
 			html += '<ul>';
-			html += '<li>'+lasteupdated+' (page: '+meta_title_lasted_wiki.attr( 'content' ) +')</li>';
+			html += '<li>'+lasteupdated+' (page: <a href="'+meta_title_lasted_wiki.attr( 'content' )+'">'+meta_title_lasted_wiki.attr( 'content' ) +'</a>)</li>';
 			html += '</ul>';
 			footerplaces.before(html);
 			html = '';
