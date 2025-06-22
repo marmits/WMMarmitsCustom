@@ -1,5 +1,5 @@
 <?php
-
+use MediaWiki\Auth\AuthenticationResponse;
 /* 
 * fork =>
 * https://www.mediawiki.org/wiki/Extension:LastModified
@@ -10,6 +10,7 @@
  */
 class MarmitsCustomHooks {
 
+	public const DIR_LOG_PASS_FAILED = 'PASS';
 	
     /**
      * @return string
@@ -29,6 +30,36 @@ class MarmitsCustomHooks {
 			'/w/api.php'
         ];
     }
+
+
+	 /**
+     * Function to log failed login attempts with IP address
+     * @param AuthenticationResponse $response
+     * @param User $user
+     * @param string $username
+     * @param array $extraData
+     * @return bool
+     */
+    public static function onAuthManagerLoginAuthenticateAudit( $response, $user, $username, $extraData ) {
+		
+        $request = RequestContext::getMain()->getRequest();
+        $ip = $request->getIP();
+		global $wgMarmitsCustomPathLogFileFailed;
+
+        // Log failed login attempts with IP address
+        if ( $response && $response->status !== AuthenticationResponse::PASS ) {
+            $logMessage = sprintf(
+                "Login failed for user '%s' from IP '%s'\n",
+                $username,
+                $ip
+            );
+            file_put_contents($wgMarmitsCustomPathLogFileFailed, $logMessage, FILE_APPEND );
+        }
+        return true;
+    }
+
+
+	
     /**
      * @throws MWException
      */
@@ -241,6 +272,8 @@ class MarmitsCustomHooks {
 		}
 		return true;
 	}
+	
 
+	
 
 }

@@ -48,7 +48,8 @@
 		"SkinAddFooterLinks": "MarmitsCustomHooks::onSkinAddFooterLinks",
 		"SkinTemplateNavigation::Universal": "MarmitsCustomHooks::onPagelinks",
 		"InfoAction": "MarmitsCustomHooks::onInfoPage",
-		"APIAfterExecute": "MarmitsCustomHooks::onAPIAfterExecute"
+		"APIAfterExecute": "MarmitsCustomHooks::onAPIAfterExecute",
+		"AuthManagerLoginAuthenticateAudit": "MarmitsCustomHooks::onAuthManagerLoginAuthenticateAudit"
 	},
 	"config": {
 		"MarmitsCustomRange": {
@@ -58,6 +59,10 @@
 		"MarmitsCustomInfoDate": {
 			"description": "This variable controls the display the older date and the newer date of the logevents",
 			"value": 1
+		},
+		"MarmitsCustomPathLogFileFailed":{
+			"description": "Path du fichier log par défaut à la racine du projet",
+			"value" : "./failed_auth.log"
 		}
 	},
 	"manifest_version": 2
