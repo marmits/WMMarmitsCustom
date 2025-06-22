@@ -8,10 +8,7 @@ use MediaWiki\Auth\AuthenticationResponse;
 /**
  *
  */
-class MarmitsCustomHooks {
-
-	public const DIR_LOG_PASS_FAILED = 'PASS';
-	
+class MarmitsCustomHooks {	
     /**
      * @return string
      */
@@ -19,6 +16,7 @@ class MarmitsCustomHooks {
     {
         return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'];
     }
+
     /**
      * @return string[]
      */
@@ -31,15 +29,14 @@ class MarmitsCustomHooks {
         ];
     }
 
-
-	 /**
-     * Function to log failed login attempts with IP address
-     * @param AuthenticationResponse $response
-     * @param User $user
-     * @param string $username
-     * @param array $extraData
-     * @return bool
-     */
+	/**
+	 * Function to log failed login attempts with IP address
+	 * @param AuthenticationResponse $response
+	 * @param User $user
+	 * @param string $username
+	 * @param array $extraData
+	 * @return bool
+	 */
     public static function onAuthManagerLoginAuthenticateAudit( $response, $user, $username, $extraData ) {
 		
         $request = RequestContext::getMain()->getRequest();
@@ -57,8 +54,6 @@ class MarmitsCustomHooks {
         }
         return true;
     }
-
-
 	
     /**
      * @throws MWException
@@ -140,9 +135,9 @@ class MarmitsCustomHooks {
 	}
 
 
-	/*
-	Protège l'accès à certaines pages
-	*/
+	/** 
+	 * Protège l'accès à certaines pages
+	 */
 	public static function Confidentiel( ){
 
 		global $wgRequest;
@@ -273,7 +268,4 @@ class MarmitsCustomHooks {
 		return true;
 	}
 	
-
-	
-
 }
