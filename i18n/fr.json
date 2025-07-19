@@ -4,7 +4,7 @@
 			"Geo"
 		]
 	},
-	"marmitscustom-desc": "Fork de LastModified + Protège l'accès à certaines pages + Custom le footer + Supprime le lien discussion de la page + Supprime le lien voir source de la page + Protège l'accès à l'information de la page",
+	"marmitscustom-desc": "Fork de LastModified + Protège l'accès à certaines pages + Custom le footer + Supprime le lien discussion de la page + Supprime le lien voir source de la page + Protège l'accès à l'information de la page + Ajout d'un fichier log custom pour authentification failed",
 	"marmitscustom": "Dernière modification",
 	"marmitscustom-title-tag": "Afficher l’historique des versions pour cet article.",
 	"marmitscustom-seconds": "Dernière mise à jour il y a $1 seconde{{PLURAL:$1||s}}",

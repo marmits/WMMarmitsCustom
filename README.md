@@ -21,7 +21,7 @@ Plusieurs Hook sont exploités. (voir section Hooks dans `extension.json`)
 + Supprime le lien discussion de la page
 + Supprime le lien voir source de la page
 + Protège l'accès à l'information de la page
-+ Ajout d'un fichier log custom pour `authentification failed` (`$wgMarmitsCustomPathLogFileFailed` => fichier pour enregistrer les mauvaises authentifications et garde l'addresse IP reponsable / par défaut le fichier `failed_auth.log` est créé).
++ Ajout d'un fichier log custom pour `authentification failed` (`$wgMarmitsCustomPathLogFileFailed` =>     fichier pour enregistrer les mauvaises authentifications et garde l'addresse IP reponsable / par défaut le  fichier `failed_auth.log` est créé).  
 Peut être utlisé par fail2Ban pour bannir les ips contenu dans ce fichier.
 
 Ressources api authorisées et utlisées
@@ -39,17 +39,17 @@ Testé sur [MediaWiki 1.43 (LTS)](https://www.mediawiki.org/wiki/MediaWiki_1.43)
 * Dans `LocalSettings.php` ajouter :   
 `wfLoadExtension( 'WMMarmitsCustom' );`
 
-### Paramètre  
-Pour désactiver le hook d'origine de 'LastModified' :   
+### Paramètres  
+#### 1. Pour désactiver le hook d'origine de 'LastModified' :   
 Dans `LocalSettings.php` ajouter :  
 `$wgMarmitsCustomRange = -1;`
 
-Si le hook LastModified est activé :  
-custom voir `$wgLastModifiedRange` dans doc  
-`$wgMarmitsCustomRange` = `$wgLastModifiedRange`  
-[Extension:LastModified](https://www.mediawiki.org/wiki/Extension:LastModified)
+  Si le hook LastModified est activé :  
+  custom voir `$wgLastModifiedRange` dans doc  
+  `$wgMarmitsCustomRange` = `$wgLastModifiedRange`  
+  [Extension:LastModified](https://www.mediawiki.org/wiki/Extension:LastModified)
 
-Pour désactiver l'affichage des dates de création et denière modification du wiki dans le footer.   
+#### 2. Pour désactiver l'affichage des dates de création et denière modification du wiki dans le footer.   
 Dans `LocalSettings.php` ajouter :  
 `$wgMarmitsCustomInfoDate = 0;`
 
@@ -61,7 +61,27 @@ Modifier le CSS -> ajouter dans `MediaWiki:Common.css`
 #marmitswikicreatedmobile{
 	display:inline-block;
 }
-
 ```
+#### 3. Pour définir un fichier de log personnalisé pour authentification failed (Peut être exploité par Fail2Ban)
+Dans `LocalSettings.php` ajouter :  
+`$wgMarmitsCustomPathLogFileFailed = "/path/to/mediawiki/failed_auth.log";`
 
+Exemple Fail2Ban:
+```
+/etc/fail2ban/jail.local
+[mediawiki-auth]
+backend = auto
+enabled  = true
+filter   = z_mediawiki-bruteforce
+logpath  = /path/to/mediawiki/failed_auth.log
+maxretry = 3
+bantime  = 24h
+findtime = 1h
+port     = http,https
+action   = %(action_mwl)s
 
+/etc/fail2ban/filter.d/z_mediawiki-bruteforce.conf
+[Definition]
+failregex = ^Login failed for user '.*' from IP '<HOST>'$
+ignoreregex =
+```
