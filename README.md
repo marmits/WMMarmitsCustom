@@ -21,7 +21,7 @@ Plusieurs Hook sont exploités. (voir section Hooks dans `extension.json`)
 + Supprime le lien discussion de la page
 + Supprime le lien voir source de la page
 + Protège l'accès à l'information de la page
-+ Ajout d'un fichier log custom pour `authentification failed` (`$wgMarmitsCustomPathLogFileFailed` =>     fichier pour enregistrer les mauvaises authentifications et garde l'addresse IP reponsable / par défaut le  fichier `failed_auth.log` est créé).  
++ Ajout d'un fichier log custom pour `authentification failed` (`$wgMarmitsCustomPathLogFileFailed` => fichier pour enregistrer les mauvaises authentifications et garde l'addresse IP reponsable / par défaut le  fichier `failed_auth.log` est créé).  
 Peut être utlisé par fail2Ban pour bannir les ips contenu dans ce fichier.
 
 Ressources api authorisées et utlisées
