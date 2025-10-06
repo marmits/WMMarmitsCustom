@@ -42,14 +42,18 @@
 		"localBasePath": "modules",
 		"remoteExtPath": "MarmitsCustom/modules"
 	},
-	"Hooks": {
+	"Hooks": {		
 		"BeforePageDisplay": "MarmitsCustomHooks::onLastModified",
 		"OutputPageParserOutput": "MarmitsCustomHooks::Confidentiel",
 		"SkinAddFooterLinks": "MarmitsCustomHooks::onSkinAddFooterLinks",
 		"SkinTemplateNavigation::Universal": "MarmitsCustomHooks::onPagelinks",
 		"InfoAction": "MarmitsCustomHooks::onInfoPage",
 		"APIAfterExecute": "MarmitsCustomHooks::onAPIAfterExecute",
-		"AuthManagerLoginAuthenticateAudit": "MarmitsCustomHooks::onAuthManagerLoginAuthenticateAudit"
+		"AuthManagerLoginAuthenticateAudit": "MarmitsCustomHooks::onAuthManagerLoginAuthenticateAudit",
+		"SetupAfterCache": "MarmitsCustomHooks::initNamespaces",
+		"SearchDataForIndex": "MarmitsCustomHooks::onSearchDataForIndex",
+        "BeforeInitialize": "MarmitsCustomHooks::onBeforeInitialize",
+        "ShowSearchHit": "MarmitsCustomHooks::onShowSearchHit"
 	},
 	"config": {
 		"MarmitsCustomRange": {

@@ -1,5 +1,9 @@
 <?php
 use MediaWiki\Auth\AuthenticationResponse;
+use MediaWiki\MediaWikiServices;
+
+
+
 /* 
 * fork =>
 * https://www.mediawiki.org/wiki/Extension:LastModified
@@ -28,6 +32,7 @@ class MarmitsCustomHooks {
 			'/w/api.php'
         ];
     }
+	
 
 	/**
 	 * Function to log failed login attempts with IP address
@@ -267,5 +272,93 @@ class MarmitsCustomHooks {
 		}
 		return true;
 	}
+
+	/**
+     * Initialise les namespaces Private au chargement de l'extension
+     * Hook: SetupAfterCache
+     */
+    public static function initNamespaces(): void {
+        if (!defined('NS_PRIVATE')) {
+            define('NS_PRIVATE', 3000);
+            define('NS_PRIVATE_TALK', 3001);
+
+            global $wgExtraNamespaces, $wgNamespaceProtection;
+            $wgExtraNamespaces[NS_PRIVATE] = 'Private';
+            $wgExtraNamespaces[NS_PRIVATE_TALK] = 'Private_talk';
+
+            // Edition réservée aux sysop
+            $wgNamespaceProtection[NS_PRIVATE] = ['sysop'];
+        }
+    }
+
+    /**
+     * Bloque l’indexation des pages Private
+     * Hook: SearchDataForIndex
+     */
+    public static function onSearchDataForIndex(Title $title, &$text, &$terms, &$weights): bool {
+        return !self::isPrivatePage($title);
+    }
+
+    /**
+     * Protège l’accès aux pages Private pour les utilisateurs non-admins
+     * Hook: BeforeInitialize
+     */
+    public static function onBeforeInitialize(&$title, &$unused, &$output, &$user, $request, $mediaWiki): bool {
+        if (!$title instanceof Title || $user->isAllowed('protect')) {
+            return true;
+        }
+
+        if ($title->inNamespace(NS_PRIVATE) || self::isPrivatePage($title)) {
+            $output->setStatusCode(403);
+            $output->showErrorPage('permissionserrors', 'badaccess');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Filtre les résultats de recherche pour les non-admins
+     * Hook: ShowSearchHit
+     */
+    public static function onShowSearchHit($searchPage, $result, $terms, &$link, &$redirect, &$section, &$extract, &$score, &$size, &$date, &$related, &$html): bool {
+        $user = $searchPage->getUser();
+        if ($user->isAllowed('protect')) {
+            return true;
+        }
+
+        $title = $result->getTitle();
+        if ($title->inNamespace(NS_PRIVATE) || self::isPrivatePage($title)) {
+            $link = '';
+            $html = '';
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Vérifie si une page appartient à la catégorie Private
+     */
+    private static function isPrivatePage(Title $title): bool {
+        if (!$title->exists() || $title->isSpecialPage()) {
+            return false;
+        }
+
+        $page = MediaWikiServices::getInstance()->getWikiPageFactory()->newFromTitle($title);
+        if (!$page || !$page->exists()) {
+            return false;
+        }
+
+        foreach ($page->getCategories() as $category) {
+            if ($category->getDBkey() === 'Private') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+		 
+
 	
 }
