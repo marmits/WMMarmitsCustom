@@ -22,14 +22,47 @@ class MarmitsCustomHooks {
     }
 
     /**
-     * @return string[]
+     * Règles d'accès autorisées
+     * Chaque élément contient :
+     *   - 'path' : chemin de l'URL
+     *   - 'params' : tableau clé => valeur des paramètres obligatoires
+     *   - 'registered_only' : booléen, si vrai seuls les utilisateurs enregistrés y ont accès
      */
-    private static function getUrlAuthorized(): array
-    {
-        return [            
-			'/w/api.php?action=query&list=logevents&formatversion=2&lelimit=1&ledir=newer&format=json',	
-			'/w/api.php?action=query&list=recentchanges&formatversion=2&formatversion=2&rclimit=1&format=json',					
-			'/w/api.php'
+    private static function getAccessRules(): array {
+        return [
+            // accès complet à ces URLs statiques
+            [
+                'path' => '/w/api.php',
+                'params' => [
+                    'action' => 'query',
+                    'list' => 'logevents',
+                    'formatversion' => '2',
+                    'lelimit' => '1',
+                    'ledir' => 'newer',
+                    'format' => 'json'
+                ],
+                'registered_only' => false,
+            ],
+            [
+                'path' => '/w/api.php',
+                'params' => [
+                    'action' => 'query',
+                    'list' => 'recentchanges',
+                    'formatversion' => '2',
+                    'rclimit' => '1',
+                    'format' => 'json'
+                ],
+                'registered_only' => false,
+            ],
+            // exemple dynamique feedrecentchanges RSS
+            [
+                'path' => '/w/api.php',
+                'params' => [
+                    'action' => 'feedrecentchanges',
+                    'feedformat' => 'rss',
+                ],
+                'registered_only' => false,
+            ],
         ];
     }
 	
@@ -68,76 +101,111 @@ class MarmitsCustomHooks {
     public static function onAPIAfterExecute(ApiBase $module ): bool
     {
         $read_data = false;
+
         $url_request = $module->getRequest()->getRequestURL();
-	
-        if(!in_array($url_request, self::getUrlAuthorized()) ) {
-            if($module->getUser()->isRegistered()){
-                $read_data = true;
+        $request_path = parse_url($url_request, PHP_URL_PATH);
+        $params = $module->getRequest()->getValues();
+
+        foreach (self::getAccessRules() as $rule) {
+            // Vérifie le chemin
+            if ($request_path !== $rule['path']) {
+                continue;
             }
-        } else {
+
+            // Vérifie que tous les paramètres obligatoires correspondent
+            $match = true;
+            foreach ($rule['params'] as $key => $value) {
+                if (!isset($params[$key]) || (string)$params[$key] !== (string)$value) {
+                    $match = false;
+                    break;
+                }
+            }
+
+            if ($match) {
+                // si la règle exige utilisateur enregistré
+                if ($rule['registered_only'] && !$module->getUser()->isRegistered()) {
+                    continue;
+                }
+                $read_data = true;
+                break;
+            }
+        }
+
+        // accès complet aux utilisateurs enregistrés (si aucune règle spécifique ne match)
+        if (!$read_data && $module->getUser()->isRegistered()) {
             $read_data = true;
         }
-        if($read_data === false){
-            $module->dieWithException(new HttpError(401, 'Sorry! Forbidden ressource => blocked by '.MarmitsCustomHooks::class.' Extension '));
-        }
-		return true;
-	}
 
-    /**
-     * Function provenant de l'extension LastModified
-     * @param OutputPage &$out
-     * @param Skin &$sk
-     * @return bool
-     * @throws DateMalformedStringException
-     */
-	public static function onLastModified( &$out, &$sk ) {
+        if (!$read_data) {
+            $module->dieWithException(
+                new HttpError(401, 'Sorry! Forbidden resource => blocked by ' . MarmitsCustomHooks::class . ' Extension')
+            );
+        }
+
+        return true;
+    }
+	
+
+    public static function onLastModified( &$out, &$sk ) {
 		global $wgMarmitsCustomRange;
-        global $wgMarmitsCustomInfoDate;
+		global $wgMarmitsCustomInfoDate;
 
-		// paramètre MarmitsCustomRange de l'extension à -1 => désactive le rendu
-		//if($wgMarmitsCustomRange !== -1){
+		$context = $out->getContext();
+		$title = $context->getTitle();
 
-			$context = $out->getContext();
-			$title = $context->getTitle();
+		// Don't try to proceed if we don't care about the target page
+		if ( !( $title instanceof Title && $title->getNamespace() == 0 && $title->exists() ) ) {
+			return true;
+		}
 
-			// Don't try to proceed if we don't care about the target page
-			if ( !( $title instanceof Title && $title->getNamespace() == 0 && $title->exists() ) ) {
-				return true;
+		$article = Article::newFromTitle( $title, $context );
+
+		if ( $article ) {
+			$timestamp = wfTimestamp( TS_UNIX, $article->getPage()->getTimestamp() );
+			$out->addMeta( 'http:last-modified', date( 'r', $timestamp ) );
+			$out->addMeta( 'last-modified-timestamp', $timestamp );
+			$out->addMeta( 'last-modified-range', $wgMarmitsCustomRange );
+		}
+
+		// Exploiter l'API pour récupérer des données
+		if ( $wgMarmitsCustomInfoDate === 1 ) {
+			$out->addMeta( 'http:urlwiki', self::getUrlBase() );
+
+			// On récupère dynamiquement les URLs autorisées pour 'query' (logevents et recentchanges)
+			$rules = self::getAccessRules();
+
+			$jsonOlder = $jsonNewer = null;
+
+			foreach ( $rules as $rule ) {
+				if ( isset($rule['params']['action']) && $rule['params']['action'] === 'query' ) {
+					if ( isset($rule['params']['list']) && $rule['params']['list'] === 'logevents' ) {
+						$url = self::getUrlBase() . $rule['path'] . '?' . http_build_query($rule['params']);
+						$jsonOlder = file_get_contents($url);
+					} elseif ( isset($rule['params']['list']) && $rule['params']['list'] === 'recentchanges' ) {
+						$url = self::getUrlBase() . $rule['path'] . '?' . http_build_query($rule['params']);
+						$jsonNewer = file_get_contents($url);
+					}
+				}
 			}
 
-			$article = Article::newFromTitle( $title, $context );
+			if ($jsonOlder && $jsonNewer) {
+				$objOlder = json_decode($jsonOlder, true);
+				$objNewer = json_decode($jsonNewer, true);
 
-			if ( $article ) {
-				$timestamp = wfTimestamp( TS_UNIX, $article->getPage()->getTimestamp() );
-				$out->addMeta( 'http:last-modified', date( 'r', $timestamp ) );
-				$out->addMeta( 'last-modified-timestamp', $timestamp );
-				$out->addMeta( 'last-modified-range', $wgMarmitsCustomRange );
+				$firstcreate = new DateTimeImmutable($objOlder['query']['logevents'][0]['timestamp']);
+				$lastcreate = new DateTime($objNewer['query']['recentchanges'][0]['timestamp']);
+				$lastcreate->setTimezone(new DateTimeZone(date_default_timezone_get()));
 
+				$out->addMeta('http:date_created_wiki', $firstcreate->format('d/m/Y'));
+				$out->addMeta('http:date_lasted_wiki', $lastcreate->format('d/m/Y à H:i'));
+				$out->addMeta('http:title_lasted_wiki', $objNewer['query']['recentchanges'][0]['title']);
 			}
-		//}
+		}
 
-        // Permet d'exploiter l'api pour récupérer des données et les ajouter dans les metas de la page
-        // et pouvoir les exploiter via javascript
-        if($wgMarmitsCustomInfoDate === 1) {
-            $out->addMeta( 'http:urlwiki', self::getUrlBase()  );
-            $jsonOlder = file_get_contents(self::getUrlBase().self::getUrlAuthorized()[0]);
-            $jsonNewer = file_get_contents(self::getUrlBase().self::getUrlAuthorized()[1]);
-			
-            $objOlder = json_decode($jsonOlder, true);
-            $objNewer = json_decode($jsonNewer, true);		
-			
-            $firstcreate = new DateTimeImmutable($objOlder['query']['logevents'][0]['timestamp']);
-           
-			$lastcreate = new DateTime( $objNewer['query']['recentchanges'][0]['timestamp']);
-			$lastcreate->setTimezone( new DateTimeZone( date_default_timezone_get() ) );
-
-            $out->addMeta( 'http:date_created_wiki', $firstcreate->format('d/m/Y')  );
-            $out->addMeta( 'http:date_lasted_wiki', $lastcreate->format('d/m/Y à H:i'));
-            $out->addMeta( 'http:title_lasted_wiki', $objNewer['query']['recentchanges'][0]['title']);
-        }
-        $out->addModules( 'marmits.custom' );
+		$out->addModules('marmits.custom');
 		return true;
 	}
+
 
 
 	/** 
