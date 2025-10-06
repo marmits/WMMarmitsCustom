@@ -30,6 +30,13 @@ class MarmitsCustomHooks {
      */
     private static function getAccessRules(): array {
         return [
+			[
+				'path' => '/w/api.php',
+				'params' => [
+				'action' => 'logout',
+				],
+				'registered_only' => false, // autorise tout le monde
+			],
             // accès complet à ces URLs statiques
             [
                 'path' => '/w/api.php',
