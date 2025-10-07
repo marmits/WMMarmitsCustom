@@ -1,7 +1,7 @@
 <?php
 use MediaWiki\Auth\AuthenticationResponse;
 use MediaWiki\MediaWikiServices;
-
+use RecentChange;
 
 
 /* 
@@ -151,14 +151,17 @@ class MarmitsCustomHooks {
 
         return true;
     }
-	
+
 
     public static function onLastModified( &$out, &$sk ) {
 		global $wgMarmitsCustomRange;
 		global $wgMarmitsCustomInfoDate;
 
+        $title = $out->getTitle();
+
+
 		$context = $out->getContext();
-		$title = $context->getTitle();
+
 
 		// Don't try to proceed if we don't care about the target page
 		if ( !( $title instanceof Title && $title->getNamespace() == 0 && $title->exists() ) ) {
@@ -210,6 +213,7 @@ class MarmitsCustomHooks {
 		}
 
 		$out->addModules('marmits.custom');
+
 		return true;
 	}
 
@@ -358,6 +362,7 @@ class MarmitsCustomHooks {
             define('NS_PRIVATE_TALK', 3001);
 
             global $wgExtraNamespaces, $wgNamespaceProtection;
+
             $wgExtraNamespaces[NS_PRIVATE] = 'Private';
             $wgExtraNamespaces[NS_PRIVATE_TALK] = 'Private_talk';
 
@@ -412,10 +417,106 @@ class MarmitsCustomHooks {
         return true;
     }
 
+
+    /**
+     * Filtrer les RC pour masquer les pages privées aux anonymes
+     * Hook: ChangesListSpecialPageQuery
+     *
+     * @param string $name            Nom de la special page (Recentchanges, Recentchangeslinked, Watchlist)
+     * @param array &$tables          Tables
+     * @param array &$fields          Colonnes
+     * @param array &$conds           WHERE
+     * @param array &$query_options   Options
+     * @param array &$join_conds      JOINs
+     * @param FormOptions $opts       Options de formulaire
+     * @return bool
+     */
+    public static function onChangesListSpecialPageQuery(
+        $name, &$tables, &$fields, &$conds, &$query_options, &$join_conds, $opts
+    ): bool {
+        
+        $user = RequestContext::getMain()->getUser();
+
+        // On ne filtre que pour les non connectés
+        if ( $user->isRegistered() ) {
+            return true;
+        }
+
+        // (optionnel) exclure le namespace "Private" si défini
+        if ( defined('NS_PRIVATE') ) {
+            $conds[] = 'rc_namespace != ' . NS_PRIVATE;
+        }
+
+        // Exclure les pages appartenant à [[Category:Private]]
+        // On joint categorylinks sur rc_cur_id et on garde uniquement les lignes
+        // où il n'y a PAS de correspondance (cl_from IS NULL).
+        $dbr = MediaWikiServices::getInstance()
+            ->getDBLoadBalancer()->getConnection( DB_REPLICA );
+
+        $tables[] = 'categorylinks';
+        $join_conds['categorylinks'] = [
+            'LEFT JOIN',
+            // Attention: utiliser une valeur quotée pour cl_to
+            'categorylinks.cl_from = rc_cur_id AND categorylinks.cl_to = ' . $dbr->addQuotes( 'Private' )
+        ];
+        $conds[] = 'categorylinks.cl_from IS NULL';
+
+        // Masque aussi la page de catégorie elle-même : Catégorie:Private
+        $conds[] = 'NOT (rc_namespace = ' . NS_CATEGORY .
+        ' AND rc_title = ' . $dbr->addQuotes('Private') . ')';
+
+
+        return true;
+    }
+
+    /**
+     * Filtrer Spécial:Nouvelles_pages côté SQL pour masquer les pages privées.
+     * Hook: SpecialNewpagesConditions
+     *
+     * @param NewPagesPager $pager
+     * @param FormOptions $opts
+     * @param array &$conds
+     * @param array &$tables
+     * @param array &$fields
+     * @param array &$join_conds
+     * @return bool
+     */
+    public static function onSpecialNewpagesConditions(
+        $pager, $opts, &$conds, &$tables, &$fields, &$join_conds
+    ): bool {
+        $user = RequestContext::getMain()->getUser();
+
+        // Laisse tout visible aux utilisateurs autorisés (ex: possédant 'protect', comme dans ton code)
+        if ( $user->isAllowed( 'protect' ) ) {
+            return true;
+        }
+
+        // (Optionnel) exclure tout le namespace Private si tu veux une double barrière
+        if ( defined( 'NS_PRIVATE' ) ) {
+            $conds[] = 'page_namespace != ' . NS_PRIVATE;
+        }
+
+        // Exclure les pages catégorisées [[Category:Private]]
+        // NewPagesPager joint déjà 'page' via 'page_id = rc_cur_id' (cf. source),
+        // on peut donc joindre categorylinks sur page_id et filtrer.
+        $dbr = MediaWiki\MediaWikiServices::getInstance()
+            ->getDBLoadBalancer()->getConnection( DB_REPLICA );
+
+        $tables[] = 'categorylinks';
+        $join_conds['categorylinks'] = [
+            'LEFT JOIN',
+            'categorylinks.cl_from = page_id AND categorylinks.cl_to = ' . $dbr->addQuotes( 'Private' )
+        ];
+        // On ne garde que les lignes sans correspondance catégorie 'Private'
+        $conds[] = 'categorylinks.cl_from IS NULL';
+
+        return true;
+    }
+
     /**
      * Vérifie si une page appartient à la catégorie Private
      */
-    private static function isPrivatePage(Title $title): bool {
+    public static function isPrivatePage(Title $title): bool {
         if (!$title->exists() || $title->isSpecialPage()) {
             return false;
         }

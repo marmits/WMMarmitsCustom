@@ -53,8 +53,14 @@
 		"SetupAfterCache": "MarmitsCustomHooks::initNamespaces",
 		"SearchDataForIndex": "MarmitsCustomHooks::onSearchDataForIndex",
         "BeforeInitialize": "MarmitsCustomHooks::onBeforeInitialize",
-        "ShowSearchHit": "MarmitsCustomHooks::onShowSearchHit"
-	},
+        "ShowSearchHit": "MarmitsCustomHooks::onShowSearchHit",
+        "ChangesListSpecialPageQuery": "MarmitsCustomHooks::onChangesListSpecialPageQuery",
+        "SpecialNewpagesConditions": "MarmitsCustomHooks::onSpecialNewpagesConditions"
+
+
+
+
+    },
 	"config": {
 		"MarmitsCustomRange": {
 			"description": "This variable controls the display range.\nSee documentation on https://www.mediawiki.org/wiki/Extension:LastModified for more details.",
