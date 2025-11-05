@@ -144,20 +144,23 @@ function getMetaRange () {
 	return 0;
 }
 
+// PATCH https://gerrit.wikimedia.org/r/q/Ia406630dbac5ef9a9aed3f402f0ba6e434a6bcf2
 function LastModifiedExtension(){
 	var metaTag = $( "meta[name=last-modified-range]" );
 	if(getMetaRange() !== -1){
-		var historyLink = getArticleHistoryLink(),
-		html = '';
+		const historyLink = getArticleHistoryLink();
 
-		html += '<div id="mwe-lastmodified">';
-		html += '<a href="' + historyLink + '" title="' + mw.message( 'lastmodified-title-tag' ).escaped() + '">';
-		html += getLastModifiedText( getUtcTimeStamp() - getMetaLastModifiedTimestamp(), getMetaRange() );
-		html += '</a>';
-		html += '</div>';
+		const $container = $( '<div>' ).attr( 'id', 'mwe-lastmodified' );
+		const $link = $( '<a>' )
+		.attr({
+			href: historyLink,
+			title: mw.msg( 'lastmodified-title-tag' )
+		})
+		.text( getLastModifiedText( getUtcTimeStamp() - getMetaLastModifiedTimestamp(), getMetaRange() ) );
+		$container.append( $link );
 
 		// Insert the HTML into the web page, based on skin
-		$( '.mw-indicators' ).append( html );
+		$( '.mw-indicators' ).append( $container );
 	}
 }
 
