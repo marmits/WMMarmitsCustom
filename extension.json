@@ -48,7 +48,7 @@
 		"SkinAddFooterLinks": "MarmitsCustomHooks::onSkinAddFooterLinks",
 		"SkinTemplateNavigation::Universal": "MarmitsCustomHooks::onPagelinks",
 		"InfoAction": "MarmitsCustomHooks::onInfoPage",
-		"APIAfterExecute": "MarmitsCustomHooks::onAPIAfterExecute",
+        "ApiCheckCanExecute": "MarmitsCustomHooks::onApiCheckCanExecute",
 		"AuthManagerLoginAuthenticateAudit": "MarmitsCustomHooks::onAuthManagerLoginAuthenticateAudit",
 		"SetupAfterCache": "MarmitsCustomHooks::initNamespaces",
 		"SearchDataForIndex": "MarmitsCustomHooks::onSearchDataForIndex",

@@ -1,10 +1,16 @@
 <?php
 use MediaWiki\Auth\AuthenticationResponse;
 use MediaWiki\MediaWikiServices;
-use RecentChange;
+use MediaWiki\Title\Title;
 
+// Action API interne
+use MediaWiki\Api\ApiMain;
+use MediaWiki\Request\FauxRequest;
 
-/* 
+// Pages
+use MediaWiki\Page\WikiPageFactory;
+
+/*
 * fork =>
 * https://www.mediawiki.org/wiki/Extension:LastModified
 */
@@ -12,14 +18,35 @@ use RecentChange;
 /**
  *
  */
-class MarmitsCustomHooks {	
+class MarmitsCustomHooks {
+
+    public const API_ERROR_MARMITS_EXTENSION = 'apierror-forbidden-marmits-custom-extension';
     /**
      * @return string
      */
     private static function getUrlBase(): string
     {
-        return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'];
+        //return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'];
+        global $wgCanonicalServer, $wgServer;
+        // Priorité à l’URL canonique complète si définie
+        if (is_string($wgCanonicalServer) && $wgCanonicalServer !== '') {
+            return rtrim($wgCanonicalServer, '/');
+        }
+        // Sinon base server (peut être protocol-relative //example.com)
+        return rtrim($wgServer ?: '', '/');
     }
+
+    /**
+     * Appel interne de l'Action API (sans requête HTTP).
+     * Retourne le tableau de résultat (équivalent au JSON décodé).
+     */
+    private static function queryApiInternal( array $params ): array {
+        $request = new FauxRequest( $params, /* wasPosted */ true );
+        $api = new ApiMain( $request );
+        $api->execute();
+        return $api->getResult()->getResultData( [], [ 'BC' => [] ] );
+    }
+
 
     /**
      * Règles d'accès autorisées
@@ -30,13 +57,13 @@ class MarmitsCustomHooks {
      */
     private static function getAccessRules(): array {
         return [
-			[
-				'path' => '/w/api.php',
-				'params' => [
-				'action' => 'logout',
-				],
-				'registered_only' => false, // autorise tout le monde
-			],
+            [
+                'path' => '/w/api.php',
+                'params' => [
+                    'action' => 'logout',
+                ],
+                'registered_only' => false, // autorise tout le monde
+            ],
             // accès complet à ces URLs statiques
             [
                 'path' => '/w/api.php',
@@ -57,6 +84,7 @@ class MarmitsCustomHooks {
                     'list' => 'recentchanges',
                     'formatversion' => '2',
                     'rclimit' => '1',
+                    'ledir' => 'older',
                     'format' => 'json'
                 ],
                 'registered_only' => false,
@@ -72,21 +100,22 @@ class MarmitsCustomHooks {
             ],
         ];
     }
-	
 
-	/**
-	 * Function to log failed login attempts with IP address
-	 * @param AuthenticationResponse $response
-	 * @param User $user
-	 * @param string $username
-	 * @param array $extraData
-	 * @return bool
-	 */
+
+    /**
+     * Function to log failed login attempts with IP address
+     * @param AuthenticationResponse $response
+     * @param User $user
+     * @param string $username
+     * @param array $extraData
+     * @return bool
+     * @throws MWException
+     */
     public static function onAuthManagerLoginAuthenticateAudit( $response, $user, $username, $extraData ) {
-		
+
         $request = RequestContext::getMain()->getRequest();
         $ip = $request->getIP();
-		global $wgMarmitsCustomPathLogFileFailed;
+        global $wgMarmitsCustomPathLogFileFailed;
 
         // Log failed login attempts with IP address
         if ( $response && $response->status !== AuthenticationResponse::PASS ) {
@@ -99,265 +128,302 @@ class MarmitsCustomHooks {
         }
         return true;
     }
-	
+
     /**
      * @throws MWException
      */
     //1- Permet d'authoriser l'accès à l'api seulement pour un utlisateur enregistré
     //2- Permet d'authoriser l'accès à l'api pour les anonymes à une liste de ressources définies
-    public static function onAPIAfterExecute(ApiBase $module ): bool
-    {
-        $read_data = false;
-
-        $url_request = $module->getRequest()->getRequestURL();
-        $request_path = parse_url($url_request, PHP_URL_PATH);
+    public static function onApiCheckCanExecute( $module, $user, &$message ) {
         $params = $module->getRequest()->getValues();
-
-        foreach (self::getAccessRules() as $rule) {
-            // Vérifie le chemin
-            if ($request_path !== $rule['path']) {
-                continue;
-            }
-
-            // Vérifie que tous les paramètres obligatoires correspondent
+        $allowed = false;
+        foreach ( self::getAccessRules() as $rule ) {
+            // On peut ignorer 'path' ici (ou le vérifier uniquement si dispo)
             $match = true;
-            foreach ($rule['params'] as $key => $value) {
-                if (!isset($params[$key]) || (string)$params[$key] !== (string)$value) {
+            foreach ( $rule['params'] as $k => $v ) {
+                if ( !isset( $params[$k] ) || (string)$params[$k] !== (string)$v ) {
+                    $match = false; break;
+                }
+            }
+            if ( $match ) {
+                if ( !empty( $rule['registered_only'] ) && !$user->isRegistered() ) {
                     $match = false;
-                    break;
                 }
-            }
-
-            if ($match) {
-                // si la règle exige utilisateur enregistré
-                if ($rule['registered_only'] && !$module->getUser()->isRegistered()) {
-                    continue;
-                }
-                $read_data = true;
-                break;
+                if ( $match ) { $allowed = true; break; }
             }
         }
 
-        // accès complet aux utilisateurs enregistrés (si aucune règle spécifique ne match)
-        if (!$read_data && $module->getUser()->isRegistered()) {
-            $read_data = true;
+        if ( !$allowed && $user->isRegistered() ) { $allowed = true; }
+
+        if ( !$allowed ) {
+            // Pour MW 1.43 : MessageSpecifier ou clé de message
+            //$message = [ 'apierror-forbidden (blocked by MarmitsCustomHooks Extension)', 'WMMarmitsCustom: blocked' ];
+            $message = ApiMessage::create( self::API_ERROR_MARMITS_EXTENSION );
+            return false;
+        }
+        return true;
+    }
+
+
+    public static function onLastModified( &$out, &$sk ) {
+        global $wgMarmitsCustomRange;
+        global $wgMarmitsCustomInfoDate;
+
+        $title = $out->getTitle();
+
+        // Don't try to proceed if we don't care about the target page
+        if ( !( $title instanceof Title && $title->getNamespace() == 0 && $title->exists() ) ) {
+            return true;
         }
 
-        if (!$read_data) {
-            $module->dieWithException(
-                new HttpError(401, 'Sorry! Forbidden resource => blocked by ' . MarmitsCustomHooks::class . ' Extension')
-            );
+        // T268798: Only show the message if the user is viewing the page
+        if ( $out->getActionName() !== 'view' ) {
+            return;
+        }
+
+        $wikiPage = MediaWikiServices::getInstance()
+            ->getWikiPageFactory()
+            ->newFromTitle( $title );
+
+        if ( $wikiPage && $wikiPage->exists() ) {
+            // timestamp "page_touched" n’est pas le "last edit".
+            // Pour l’heure de la dernière révision:
+            $revRecord = $wikiPage->getRevisionRecord();
+            if ( $revRecord ) {
+                $mwTs = $revRecord->getTimestamp(); // format MW yyyymmddhhmmss
+                $timestamp = wfTimestamp( TS_UNIX, $mwTs );
+                $out->addMeta( 'http:last-modified', date( 'r', $timestamp ) );
+                $out->addMeta( 'last-modified-timestamp', $timestamp );
+                $out->addMeta( 'last-modified-range', $wgMarmitsCustomRange );
+            }
+        }
+
+        // Exploiter l'API pour récupérer des données
+        if ( $wgMarmitsCustomInfoDate === 1 ) {
+            $out->addMeta( 'http:urlwiki', self::getUrlBase() );
+
+            // On récupère dynamiquement les URLs autorisées pour 'query' (logevents et recentchanges)
+            $rules = self::getAccessRules();
+
+            $paramsOlder = [
+                'action' => 'query',
+                'list' => 'logevents',
+                'format' => 'json',       // facultatif en interne ; gardé pour cohérence
+                'formatversion' => 2,
+                'lelimit' => 1,
+                'ledir' => 'newer',
+            ];
+
+            $paramsNewer = [
+                'action' => 'query',
+                'list' => 'recentchanges',
+                'format' => 'json',
+                'formatversion' => 2,
+                'rclimit' => 1,
+                'rcprop' => 'title|timestamp',
+                'ledir' => 'older',
+            ];
+
+
+            $datas = [];
+
+            foreach ( $rules as $rule ) {
+                $obj=[];
+                if ( isset($rule['params']['action']) && $rule['params']['action'] === 'query' ) {
+                    if ( isset($rule['params']['list']) && $rule['params']['list'] === 'logevents' ) {
+                        try {
+                            $objOlder = self::queryApiInternal($paramsOlder);
+                            $firstcreate = new \DateTimeImmutable($objOlder['query']['logevents'][0]['timestamp']);
+                            $obj['firstcreate']=$firstcreate->format( 'd/m/Y' );
+                        } catch ( \Throwable $e ) {
+                            if ( $e instanceof ApiUsageException ) {
+                                $msgObj = method_exists($e, 'getMessageObject') ? $e->getMessageObject() : null;
+                                $key = $msgObj && method_exists($msgObj, 'getKey') ? $msgObj->getKey() : null;
+                                if($key === self::API_ERROR_MARMITS_EXTENSION) {
+                                    continue;
+                                }
+                            }
+                        }
+                    } elseif ( isset($rule['params']['list']) && $rule['params']['list'] === 'recentchanges' ) {
+
+                        try {
+                            $objNewer = self::queryApiInternal($paramsNewer);
+                            $lastcreate = new \DateTime($objNewer['query']['recentchanges'][0]['timestamp']);
+                            $lastcreate->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+                            $obj['lastcreate'] = $lastcreate->format('d/m/Y à H:i');
+                            $obj['title'] = $objNewer['query']['recentchanges'][0]['title'];
+                        } catch ( \Throwable $e ) {
+                            if ( $e instanceof ApiUsageException ) {
+                                $msgObj = method_exists($e, 'getMessageObject') ? $e->getMessageObject() : null;
+                                $key = $msgObj && method_exists($msgObj, 'getKey') ? $msgObj->getKey() : null;
+                                if($key === self::API_ERROR_MARMITS_EXTENSION) {
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    $datas[$rule['params']['list']] = $obj;
+                }
+            }
+
+
+
+            if(array_key_exists('logevents', $datas)){
+                $out->addMeta('http:date_created_wiki', $datas['logevents']['firstcreate']);
+            }
+
+            if(array_key_exists('recentchanges', $datas)){
+                $out->addMeta('http:date_lasted_wiki', $datas['recentchanges']['lastcreate']);
+                $out->addMeta('http:title_lasted_wiki', $datas['recentchanges']['title']);
+            }
+
+        }
+
+//        echo json_encode($datas);
+//        exit();
+        $out->addModules('marmits.custom');
+
+        return true;
+    }
+
+
+
+    /**
+     * Protège l'accès à certaines pages
+     */
+    public static function Confidentiel( ){
+
+        global $wgRequest;
+        global $mediaWiki;
+        global $wgPage;
+        global $wgOut;
+        $private = false;
+
+
+        $context = RequestContext::getMain();
+        $wgUser = $context->getUser();
+
+        if($wgUser->isSafeToLoad() === true){
+
+            if ( $wgUser->isNamed() === false ) {
+
+                $page = $wgRequest->getText( 'title' );
+
+
+                $pageConnexion = "Spécial:Connexion";
+                $pageDeConnexion = "Spécial:Déconnexion";
+                $pageCat = "Spécial:Catégories";
+                $pagePage = "Spécial:Toutes_les_pages_*";
+                $pageRecheche = "Spécial:Recherche";
+                $pagePrivateCategory = "Catégorie:Private";
+
+
+
+                if (in_array("Private", $wgOut->getCategories())) {
+                    $private = true;
+                }
+
+                if(
+                    str_contains($page,'Spécial') ||
+                    str_contains($page,'MediaWiki') ||
+                    str_contains($page,'Catégorie:Private')
+                ) {
+                    $private = true;
+
+                    if(
+                        str_contains($page,'Spécial:Connexion') ||
+                        str_contains($page,'Spécial:Déconnexion') ||
+                        str_contains($page,'Spécial:Recherche')
+                    ) {
+                        $private = false;
+                    }
+                }
+
+                //  var_dump($private);
+            }
+
+            if($private === true){
+                header('Location: ' . $pageConnexion);
+                exit();
+            }
+
         }
 
         return true;
     }
 
 
-    public static function onLastModified( &$out, &$sk ) {
-		global $wgMarmitsCustomRange;
-		global $wgMarmitsCustomInfoDate;
+    /*
+    * Custom le footer
+    */
+    public static function onSkinAddFooterLinks( Skin $skin, string $key, array &$footerlinks ) {
 
-        $title = $out->getTitle();
+        /*
+        $json = file_get_contents('https://marmits.com/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json');
+        $obj = json_decode($json, true);
+        $firstcreate = new DateTimeImmutable($obj['query']['logevents'][0]['timestamp']);
+        $date_firstcreate = $firstcreate->format('Y-m-d');
 
 
-		$context = $out->getContext();
+        if ( $key === 'places' ) {
+            $footerlinks['privacy'] = $skin->msg( 'toto' )->parse();
+        }
+        if ( $key === 'info' ) {
+            $footerlinks['create'] = Html::rawElement( 'a',
+                [
+                    'href' => 'https://my.url/',
+                    'rel' => 'noreferrer noopener' // not required, but recommended for security reasons
+                ],
+                $date_firstcreate
+            );
+        }
+        */
+        return true;
+    }
 
+    /*
+    * Supprime le lien discussion de la page
+    * Supprime le lien voir source de la page
+    */
+    public static function onPagelinks ( $skinTemplate, &$links ) {
 
-		// Don't try to proceed if we don't care about the target page
-		if ( !( $title instanceof Title && $title->getNamespace() == 0 && $title->exists() ) ) {
-			return true;
-		}
+        $context = RequestContext::getMain();
+        $wgUser = $context->getUser();
 
-        // T268798: Only show the message if the user is viewing the page
-        if ( $out->getActionName() !== 'view' ) {
-			return;
-		}
+        // supprime le lien discussion de la page
+        unset( $links['associated-pages']['talk'] );
+        unset( $links['views']['viewsource'] );
+        if($wgUser->isSafeToLoad() === true){
+            if ( $wgUser->isNamed() === false ) {
+                unset( $links['views']['history'] );
+            }
+        }
 
-		$article = Article::newFromTitle( $title, $context );
-
-		if ( $article ) {
-			$timestamp = wfTimestamp( TS_UNIX, $article->getPage()->getTimestamp() );
-			$out->addMeta( 'http:last-modified', date( 'r', $timestamp ) );
-			$out->addMeta( 'last-modified-timestamp', $timestamp );
-			$out->addMeta( 'last-modified-range', $wgMarmitsCustomRange );
-		}
-
-		// Exploiter l'API pour récupérer des données
-		if ( $wgMarmitsCustomInfoDate === 1 ) {
-			$out->addMeta( 'http:urlwiki', self::getUrlBase() );
-
-			// On récupère dynamiquement les URLs autorisées pour 'query' (logevents et recentchanges)
-			$rules = self::getAccessRules();
-
-			$jsonOlder = $jsonNewer = null;
-
-			foreach ( $rules as $rule ) {
-				if ( isset($rule['params']['action']) && $rule['params']['action'] === 'query' ) {
-					if ( isset($rule['params']['list']) && $rule['params']['list'] === 'logevents' ) {
-						$url = self::getUrlBase() . $rule['path'] . '?' . http_build_query($rule['params']);
-						$jsonOlder = file_get_contents($url);
-					} elseif ( isset($rule['params']['list']) && $rule['params']['list'] === 'recentchanges' ) {
-						$url = self::getUrlBase() . $rule['path'] . '?' . http_build_query($rule['params']);
-						$jsonNewer = file_get_contents($url);
-					}
-				}
-			}
-
-			if ($jsonOlder && $jsonNewer) {
-				$objOlder = json_decode($jsonOlder, true);
-				$objNewer = json_decode($jsonNewer, true);
-
-				$firstcreate = new DateTimeImmutable($objOlder['query']['logevents'][0]['timestamp']);
-				$lastcreate = new DateTime($objNewer['query']['recentchanges'][0]['timestamp']);
-				$lastcreate->setTimezone(new DateTimeZone(date_default_timezone_get()));
-
-				$out->addMeta('http:date_created_wiki', $firstcreate->format('d/m/Y'));
-				$out->addMeta('http:date_lasted_wiki', $lastcreate->format('d/m/Y à H:i'));
-				$out->addMeta('http:title_lasted_wiki', $objNewer['query']['recentchanges'][0]['title']);
-			}
-		}
-
-		$out->addModules('marmits.custom');
-
-		return true;
-	}
+        return true;
+    }
 
 
 
-	/** 
-	 * Protège l'accès à certaines pages
-	 */
-	public static function Confidentiel( ){
 
-		global $wgRequest;
-		global $mediaWiki;
-		global $wgPage;
-		global $wgOut;	
-		$private = false;
+    /*
+    * Protège l'accès à l'information de la page
+    */
+    public static function onInfoPage ( $context, &$pageInfo ) {
 
+        $context = RequestContext::getMain();
+        $wgUser = $context->getUser();
+        $pageConnexion = "index.php?title=Spécial:Connexion";
+        if($wgUser->isSafeToLoad() === true){
 
-		$context = RequestContext::getMain();
-		$wgUser = $context->getUser();
-		
-		if($wgUser->isSafeToLoad() === true){
-			
-			if ( $wgUser->isNamed() === false ) {
+            if ( $wgUser->isNamed() === false ) {
+                header('Location: ' . $pageConnexion);
+                exit();
+            }
+        }
+        return true;
+    }
 
-				$page = $wgRequest->getText( 'title' );
-
-
-				$pageConnexion = "Spécial:Connexion";
-				$pageDeConnexion = "Spécial:Déconnexion";
-				$pageCat = "Spécial:Catégories";
-				$pagePage = "Spécial:Toutes_les_pages_*";
-				$pageRecheche = "Spécial:Recherche";
-				$pagePrivateCategory = "Catégorie:Private";
-
-				
-
-				if (in_array("Private", $wgOut->getCategories())) {
-					$private = true;
-				}
-
-				if(
-					str_contains($page,'Spécial') || 
-					str_contains($page,'MediaWiki') || 
-					str_contains($page,'Catégorie:Private') 
-				) {
-					$private = true;
-
-					if(
-					str_contains($page,'Spécial:Connexion') || 
-					str_contains($page,'Spécial:Déconnexion') || 
-					str_contains($page,'Spécial:Recherche')
-					) {
-						$private = false;
-					}
-				}
-
-				//  var_dump($private);
-			}
-
-			if($private === true){
-				header('Location: ' . $pageConnexion);
-				exit();
-			}
-			
-		}
-		
-		return true;
-	}
-
-
-	/*
-	* Custom le footer
-	*/
-	public static function onSkinAddFooterLinks( Skin $skin, string $key, array &$footerlinks ) { 
-
-		/*
-		$json = file_get_contents('https://marmits.com/w/api.php?action=query&list=logevents&lelimit=1&ledir=newer&format=json');
-		$obj = json_decode($json, true);
-		$firstcreate = new DateTimeImmutable($obj['query']['logevents'][0]['timestamp']);
-		$date_firstcreate = $firstcreate->format('Y-m-d');
-		
-		
-		if ( $key === 'places' ) { 
-			$footerlinks['privacy'] = $skin->msg( 'toto' )->parse();
-		}
-		if ( $key === 'info' ) { 
-			$footerlinks['create'] = Html::rawElement( 'a', 
-				[ 
-					'href' => 'https://my.url/',
-					'rel' => 'noreferrer noopener' // not required, but recommended for security reasons
-				], 
-				$date_firstcreate
-			); 
-		}
-		*/
-		return true;
-	}
-
-	/*
-	* Supprime le lien discussion de la page
-	* Supprime le lien voir source de la page
-	*/
-	public static function onPagelinks ( $skinTemplate, &$links ) {
-
-		$context = RequestContext::getMain();
-		$wgUser = $context->getUser();
-		
-		// supprime le lien discussion de la page	
-		 unset( $links['associated-pages']['talk'] );
-		 unset( $links['views']['viewsource'] );
-		if($wgUser->isSafeToLoad() === true){
-			if ( $wgUser->isNamed() === false ) {
-				unset( $links['views']['history'] );
-			}
-		}
-	
-		 return true;	
-	}
-
-
-	/*
-	* Protège l'accès à l'information de la page
-	*/
-	public static function onInfoPage ( $context, &$pageInfo ) {
-
-		$context = RequestContext::getMain();
-		$wgUser = $context->getUser();
-		$pageConnexion = "index.php?title=Spécial:Connexion";
-		 if($wgUser->isSafeToLoad() === true){
-			   
-			if ( $wgUser->isNamed() === false ) {
-				header('Location: ' . $pageConnexion);
-				exit();
-			}
-		}
-		return true;
-	}
-
-	/**
+    /**
      * Initialise les namespaces Private au chargement de l'extension
      * Hook: SetupAfterCache
      */
@@ -439,7 +505,7 @@ class MarmitsCustomHooks {
     public static function onChangesListSpecialPageQuery(
         $name, &$tables, &$fields, &$conds, &$query_options, &$join_conds, $opts
     ): bool {
-        
+
         $user = RequestContext::getMain()->getUser();
 
         // On ne filtre que pour les non connectés
@@ -468,7 +534,7 @@ class MarmitsCustomHooks {
 
         // Masque aussi la page de catégorie elle-même : Catégorie:Private
         $conds[] = 'NOT (rc_namespace = ' . NS_CATEGORY .
-        ' AND rc_title = ' . $dbr->addQuotes('Private') . ')';
+            ' AND rc_title = ' . $dbr->addQuotes('Private') . ')';
 
 
         return true;
@@ -539,7 +605,7 @@ class MarmitsCustomHooks {
 
         return false;
     }
-		 
 
-	
+
+
 }
