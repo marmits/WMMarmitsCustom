@@ -248,6 +248,9 @@ class MarmitsCustomHooks {
 
                         try {
                             $objNewer = self::queryApiInternal($paramsNewer);
+                            if(!array_key_exists(0, $objNewer['query']['recentchanges'])){
+                                continue;
+                            }
                             $lastcreate = new \DateTime($objNewer['query']['recentchanges'][0]['timestamp']);
                             $lastcreate->setTimezone(new \DateTimeZone(date_default_timezone_get()));
                             $obj['lastcreate'] = $lastcreate->format('d/m/Y à H:i');
